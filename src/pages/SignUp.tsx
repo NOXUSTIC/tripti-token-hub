@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,16 @@ const SignUp = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStudent, setIsStudent] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if the email is for a student or admin
+    if (formData.email) {
+      setIsStudent(formData.email.endsWith('@g.bracu.ac.bd'));
+    }
+  }, [formData.email]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,10 +46,15 @@ const SignUp = () => {
     setIsLoading(true);
 
     // Validate the form data
-    if (Object.values(formData).some(value => !value)) {
+    const requiredFields = ['name', 'id', 'email', 'password', 'confirmPassword'];
+    if (isStudent) {
+      requiredFields.push('roomNumber');
+    }
+
+    if (requiredFields.some(field => !formData[field as keyof typeof formData])) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -83,15 +96,22 @@ const SignUp = () => {
       return;
     }
 
+    // For admin users, set roomNumber to 'N/A'
+    const userData = {
+      ...formData,
+      roomNumber: isStudent ? formData.roomNumber : 'N/A',
+      role,
+    };
+
     // Create the user object and save it
     setTimeout(() => {
       try {
         saveUser({
-          name: formData.name,
-          id: formData.id,
-          email: formData.email,
-          roomNumber: formData.roomNumber,
-          password: formData.password,
+          name: userData.name,
+          id: userData.id,
+          email: userData.email,
+          roomNumber: userData.roomNumber,
+          password: userData.password,
           role,
         });
 
@@ -169,17 +189,19 @@ const SignUp = () => {
                   </p>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="roomNumber">Room Number</Label>
-                  <Input
-                    id="roomNumber"
-                    name="roomNumber"
-                    placeholder="UB-601"
-                    value={formData.roomNumber}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+                {isStudent && (
+                  <div className="space-y-2">
+                    <Label htmlFor="roomNumber">Room Number</Label>
+                    <Input
+                      id="roomNumber"
+                      name="roomNumber"
+                      placeholder="UB-601"
+                      value={formData.roomNumber}
+                      onChange={handleChange}
+                      required={isStudent}
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
