@@ -195,11 +195,14 @@ const SignUp = () => {
                     <Input
                       id="roomNumber"
                       name="roomNumber"
-                      placeholder="UB-601"
+                      placeholder="N-100 to N-1016"
                       value={formData.roomNumber}
                       onChange={handleChange}
                       required={isStudent}
                     />
+                    <p className="text-xs text-gray-500">
+                      Valid format: N-100 to N-1016
+                    </p>
                   </div>
                 )}
                 
