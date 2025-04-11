@@ -74,9 +74,9 @@ const StudentData = () => {
           </div>
           <div className="flex gap-3">
             <Button 
-              as={Link}
-              to="/month-configuration"
+              variant="default"
               className="flex items-center gap-2"
+              onClick={() => navigate('/month-configuration')}
             >
               <Calendar className="h-4 w-4" />
               Configure Months

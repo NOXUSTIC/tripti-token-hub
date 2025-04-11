@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -33,13 +32,11 @@ const MonthConfiguration = () => {
   const { toast } = useToast();
   
   useEffect(() => {
-    // Redirect if not logged in or not an admin
     if (!currentUser || currentUser.role !== 'admin') {
       navigate('/');
       return;
     }
     
-    // Generate months (current month + 11 future months)
     const generateMonths = () => {
       const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -60,7 +57,6 @@ const MonthConfiguration = () => {
       return months;
     };
     
-    // Load previously configured months from localStorage if available
     const loadMonths = () => {
       const savedMonths = localStorage.getItem('configuredMonths');
       const savedIsConfirmed = localStorage.getItem('monthsConfirmed');
@@ -90,7 +86,6 @@ const MonthConfiguration = () => {
       if (prev.includes(month)) {
         return prev.filter(m => m !== month);
       } else {
-        // Limit to 3 months
         if (prev.length < 3) {
           return [...prev, month];
         }
@@ -109,7 +104,6 @@ const MonthConfiguration = () => {
       return;
     }
     
-    // Save to localStorage
     localStorage.setItem('configuredMonths', JSON.stringify(selectedMonths));
     localStorage.setItem('monthsConfirmed', JSON.stringify(true));
     
@@ -122,8 +116,6 @@ const MonthConfiguration = () => {
   };
 
   const handleEdit = () => {
-    // In a real app, this would send an OTP to the admin's email
-    // For demo purposes, we'll just show the OTP dialog with a fixed OTP
     const mockOtp = '123456';
     console.log('OTP for verification:', mockOtp);
     
@@ -136,8 +128,6 @@ const MonthConfiguration = () => {
   };
 
   const handleVerifyOtp = () => {
-    // In a real app, this would verify the OTP against what was sent
-    // For demo purposes, we'll just check against our fixed OTP
     const mockOtp = '123456';
     
     if (otp === mockOtp) {
@@ -160,7 +150,6 @@ const MonthConfiguration = () => {
     }
   };
 
-  // Don't render anything if no current user (prevents flash before redirect)
   if (!currentUser) {
     return null;
   }
@@ -284,8 +273,8 @@ const MonthConfiguration = () => {
               onChange={setOtp}
               render={({ slots }) => (
                 <InputOTPGroup>
-                  {slots.map((slot, index) => (
-                    <InputOTPSlot key={index} {...slot} />
+                  {slots.map((slot, i) => (
+                    <InputOTPSlot key={i} {...slot} index={i} />
                   ))}
                 </InputOTPGroup>
               )}
