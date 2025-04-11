@@ -22,6 +22,8 @@ const TokenPage = () => {
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [showTokenOptions, setShowTokenOptions] = useState(false);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [totalFridays, setTotalFridays] = useState(0);
+  const [usedTokens, setUsedTokens] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,9 +36,53 @@ const TokenPage = () => {
     // Load configured months
     const configuredMonths = localStorage.getItem('configuredMonths');
     if (configuredMonths) {
-      setAvailableMonths(JSON.parse(configuredMonths));
+      const months = JSON.parse(configuredMonths);
+      setAvailableMonths(months);
+      
+      // Calculate number of Fridays in the selected months
+      calculateTotalFridays(months);
+    }
+    
+    // Load used tokens (in a real app, this would come from a database)
+    const userTokens = localStorage.getItem(`tokens_${currentUser.id}`);
+    if (userTokens) {
+      setUsedTokens(JSON.parse(userTokens).length);
+    } else {
+      setUsedTokens(0);
     }
   }, [currentUser, navigate]);
+
+  // Calculate the number of Fridays in the given months
+  const calculateTotalFridays = (months: string[]) => {
+    let totalFridays = 0;
+    
+    months.forEach(monthStr => {
+      const [monthName, yearStr] = monthStr.split(' ');
+      const year = parseInt(yearStr);
+      
+      // Convert month name to month index (0-11)
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      const monthIndex = monthNames.indexOf(monthName);
+      
+      if (monthIndex !== -1) {
+        // Get the number of days in the month
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+        
+        // Count Fridays in the month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, monthIndex, day);
+          if (date.getDay() === 5) { // 5 is Friday
+            totalFridays++;
+          }
+        }
+      }
+    });
+    
+    setTotalFridays(totalFridays);
+  };
 
   const handleLogout = () => {
     logoutUser();
@@ -45,6 +91,15 @@ const TokenPage = () => {
 
   const handleTokenSelection = (tokenId: string) => {
     setSelectedToken(tokenId);
+    
+    // Store the selected token (in a real app, this would be saved to a database)
+    const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
+    userTokens.push({
+      type: tokenId,
+      date: new Date().toISOString()
+    });
+    localStorage.setItem(`tokens_${currentUser.id}`, JSON.stringify(userTokens));
+    setUsedTokens(userTokens.length);
     
     toast({
       title: "Token Selected",
@@ -61,6 +116,9 @@ const TokenPage = () => {
   if (!currentUser) {
     return null;
   }
+
+  // Calculate available tokens
+  const availableTokens = totalFridays - usedTokens;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-tripti-light flex flex-col">
@@ -108,6 +166,7 @@ const TokenPage = () => {
                     <Button 
                       onClick={() => setShowTokenOptions(true)}
                       className="px-6"
+                      disabled={availableTokens <= 0}
                     >
                       Yes, Take Token
                     </Button>
@@ -121,6 +180,11 @@ const TokenPage = () => {
                       No, Thank You
                     </Button>
                   </div>
+                  {availableTokens <= 0 && (
+                    <p className="mt-4 text-red-500">
+                      You have used all available tokens for the selected months.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="py-4">
@@ -173,7 +237,7 @@ const TokenPage = () => {
               <CardTitle className="text-lg">Available Tokens</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-tripti-primary">5</div>
+              <div className="text-3xl font-bold text-tripti-primary">{availableTokens}</div>
               <p className="text-sm text-gray-500">Tokens available for use</p>
             </CardContent>
           </Card>
@@ -183,7 +247,7 @@ const TokenPage = () => {
               <CardTitle className="text-lg">Used Tokens</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-orange-500">2</div>
+              <div className="text-3xl font-bold text-orange-500">{usedTokens}</div>
               <p className="text-sm text-gray-500">Tokens you've already used</p>
             </CardContent>
           </Card>
@@ -193,7 +257,7 @@ const TokenPage = () => {
               <CardTitle className="text-lg">Total Allocation</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">7</div>
+              <div className="text-3xl font-bold text-green-600">{totalFridays}</div>
               <p className="text-sm text-gray-500">Your total token allocation</p>
             </CardContent>
           </Card>
@@ -231,7 +295,7 @@ const TokenPage = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-500">April 1, 2025</p>
-                    <p className="text-sm font-medium text-green-500">+7 Tokens</p>
+                    <p className="text-sm font-medium text-green-500">+{totalFridays} Tokens</p>
                   </div>
                 </div>
               </div>
