@@ -9,6 +9,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import TokenPage from "./pages/TokenPage";
 import StudentData from "./pages/StudentData";
+import MonthConfiguration from "./pages/MonthConfiguration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/token" element={<TokenPage />} />
           <Route path="/student-data" element={<StudentData />} />
+          <Route path="/month-configuration" element={<MonthConfiguration />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

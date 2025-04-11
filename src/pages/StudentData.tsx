@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, getUsers, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users } from 'lucide-react';
+import { LogOut, Search, Users, Calendar } from 'lucide-react';
 
 type StudentData = {
   name: string;
@@ -72,14 +72,24 @@ const StudentData = () => {
             <h1 className="text-3xl font-bold text-tripti-dark">Student Data Management</h1>
             <p className="text-gray-600">Manage students and their token allocations</p>
           </div>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              as={Link}
+              to="/month-configuration"
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              Configure Months
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
