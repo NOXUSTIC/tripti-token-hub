@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -70,9 +71,10 @@ const MonthConfiguration = () => {
       }
     };
     
+    // Generate months only once when component mounts
     setMonths(generateMonths());
     loadMonths();
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate]); // Added proper dependency array
 
   const handleLogout = () => {
     logoutUser();
