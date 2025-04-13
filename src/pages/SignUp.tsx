@@ -9,6 +9,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff } from 'lucide-react';
 import Header from '@/components/Header';
 import { isValidEmail, getUserRole, saveUser } from '@/utils/authUtils';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
+const dormOptions = ["Dhanshiri", "Chayaneer", "Moyurponkhi", "Dhrubotara", "Meghdut"];
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -36,6 +45,10 @@ const SignUp = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDormChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, dormName: value }));
   };
 
   const togglePasswordVisibility = () => {
@@ -196,14 +209,21 @@ const SignUp = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="dormName">Dorm Name</Label>
-                  <Input
-                    id="dormName"
-                    name="dormName"
-                    placeholder="North/South/East/West"
-                    value={formData.dormName}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Select 
+                    value={formData.dormName} 
+                    onValueChange={handleDormChange}
+                  >
+                    <SelectTrigger id="dormName" className="w-full">
+                      <SelectValue placeholder="Select a dorm" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dormOptions.map((dorm) => (
+                        <SelectItem key={dorm} value={dorm}>
+                          {dorm}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {isStudent && (
