@@ -7,6 +7,14 @@ import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
 import { LogOut, Beef, Fish, Drumstick, Wheat, Check } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 // Token types
 const TOKEN_TYPES = [
@@ -25,6 +33,7 @@ const TokenPage = () => {
   const [totalFridays, setTotalFridays] = useState(0);
   const [usedTokens, setUsedTokens] = useState(0);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [showWeeklyLimitDialog, setShowWeeklyLimitDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -90,12 +99,52 @@ const TokenPage = () => {
     navigate('/');
   };
 
+  const checkWeeklyTokenLimit = () => {
+    if (!currentUser) return true;
+    
+    const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
+    
+    if (userTokens.length === 0) return false;
+    
+    // Get the current date
+    const now = new Date();
+    
+    // Get the start and end of the current week
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+    currentWeekStart.setHours(0, 0, 0, 0);
+    
+    const currentWeekEnd = new Date(currentWeekStart);
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6); // End of week (Saturday)
+    currentWeekEnd.setHours(23, 59, 59, 999);
+    
+    // Check if user has already used a token this week
+    const tokenThisWeek = userTokens.some((token: { date: string }) => {
+      const tokenDate = new Date(token.date);
+      return tokenDate >= currentWeekStart && tokenDate <= currentWeekEnd;
+    });
+    
+    return tokenThisWeek;
+  };
+
+  const handleTokenRequest = () => {
+    const hasTokenThisWeek = checkWeeklyTokenLimit();
+    
+    if (hasTokenThisWeek) {
+      setShowWeeklyLimitDialog(true);
+    } else {
+      setShowTokenOptions(true);
+    }
+  };
+
   const handleTokenSelection = (tokenId: string) => {
     setSelectedToken(tokenId);
     setIsConfirming(true);
   };
   
   const confirmTokenSelection = () => {
+    if (!currentUser) return;
+    
     // Store the selected token (in a real app, this would be saved to a database)
     const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
     userTokens.push({
@@ -173,7 +222,7 @@ const TokenPage = () => {
                   </p>
                   <div className="flex justify-center gap-4">
                     <Button 
-                      onClick={() => setShowTokenOptions(true)}
+                      onClick={handleTokenRequest}
                       className="px-6"
                       disabled={availableTokens <= 0}
                     >
@@ -335,6 +384,22 @@ const TokenPage = () => {
           </Card>
         </div>
       </div>
+      
+      <Dialog open={showWeeklyLimitDialog} onOpenChange={setShowWeeklyLimitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Weekly Token Limit Reached</DialogTitle>
+            <DialogDescription>
+              You have already taken a token for this week. You can only take one token per week.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowWeeklyLimitDialog(false)}>
+              Okay, I understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <footer className="mt-auto py-6 bg-white border-t">
         <div className="container mx-auto px-4 text-center text-sm text-gray-500">
