@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -31,12 +30,12 @@ const SignUp = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isStudent, setIsStudent] = useState(true);
+  const [isStudent, setIsStudent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if the email is for a student or admin
+    // Check if the email is for a student
     if (formData.email) {
       setIsStudent(formData.email.endsWith('@g.bracu.ac.bd'));
     }
@@ -177,20 +176,6 @@ const SignUp = () => {
                   />
                 </div>
                 
-                {isStudent && (
-                  <div className="space-y-2">
-                    <Label htmlFor="id">Student ID</Label>
-                    <Input
-                      id="id"
-                      name="id"
-                      placeholder="20301XXX"
-                      value={formData.id}
-                      onChange={handleChange}
-                      required={isStudent}
-                    />
-                  </div>
-                )}
-                
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -206,6 +191,20 @@ const SignUp = () => {
                     Students: use @g.bracu.ac.bd | Administrators: use @bracu.ac.bd
                   </p>
                 </div>
+                
+                {isStudent && (
+                  <div className="space-y-2">
+                    <Label htmlFor="id">Student ID</Label>
+                    <Input
+                      id="id"
+                      name="id"
+                      placeholder="20301XXX"
+                      value={formData.id}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="dormName">Dorm Name</Label>
