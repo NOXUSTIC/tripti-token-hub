@@ -3,6 +3,7 @@ type User = {
   name: string;
   id: string;
   email: string;
+  dormName: string;
   roomNumber: string;
   password: string;
   role: 'student' | 'admin';

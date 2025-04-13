@@ -24,6 +24,7 @@ const TokenPage = () => {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [totalFridays, setTotalFridays] = useState(0);
   const [usedTokens, setUsedTokens] = useState(0);
+  const [isConfirming, setIsConfirming] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,25 +92,33 @@ const TokenPage = () => {
 
   const handleTokenSelection = (tokenId: string) => {
     setSelectedToken(tokenId);
-    
+    setIsConfirming(true);
+  };
+  
+  const confirmTokenSelection = () => {
     // Store the selected token (in a real app, this would be saved to a database)
     const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
     userTokens.push({
-      type: tokenId,
+      type: selectedToken,
       date: new Date().toISOString()
     });
     localStorage.setItem(`tokens_${currentUser.id}`, JSON.stringify(userTokens));
     setUsedTokens(userTokens.length);
     
     toast({
-      title: "Token Selected",
-      description: `You have selected ${tokenId} token. This will be available on Fridays.`,
+      title: "Token Confirmed",
+      description: `You have confirmed ${selectedToken} token. This will be available on Fridays.`,
     });
     
-    // In a real app, this would save the token selection to a database
-    setTimeout(() => {
-      setShowTokenOptions(false);
-    }, 1000);
+    // Reset selection state
+    setSelectedToken(null);
+    setIsConfirming(false);
+    setShowTokenOptions(false);
+  };
+  
+  const cancelTokenSelection = () => {
+    setSelectedToken(null);
+    setIsConfirming(false);
   };
 
   // Don't render anything if no current user (prevents flash before redirect)
@@ -185,6 +194,29 @@ const TokenPage = () => {
                       You have used all available tokens for the selected months.
                     </p>
                   )}
+                </div>
+              ) : isConfirming ? (
+                <div className="py-4 text-center">
+                  <h3 className="text-lg font-medium mb-4">
+                    Confirm Your Selection
+                  </h3>
+                  <p className="mb-6 text-gray-600">
+                    You have selected <strong>{selectedToken}</strong> token. Would you like to confirm?
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button 
+                      onClick={confirmTokenSelection}
+                      className="px-6"
+                    >
+                      Confirm Selection
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={cancelTokenSelection}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="py-4">
@@ -294,7 +326,7 @@ const TokenPage = () => {
                     <p className="text-sm text-gray-500">Monthly allocation</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">April 1, 2025</p>
+                    <p className="text-sm text-gray-500">January 1, 2025</p>
                     <p className="text-sm font-medium text-green-500">+{totalFridays} Tokens</p>
                   </div>
                 </div>

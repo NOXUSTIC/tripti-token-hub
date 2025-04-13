@@ -15,6 +15,7 @@ const SignUp = () => {
     name: '',
     id: '',
     email: '',
+    dormName: '',
     roomNumber: '',
     password: '',
     confirmPassword: '',
@@ -46,9 +47,9 @@ const SignUp = () => {
     setIsLoading(true);
 
     // Validate the form data
-    const requiredFields = ['name', 'id', 'email', 'password', 'confirmPassword'];
+    const requiredFields = ['name', 'email', 'dormName', 'password', 'confirmPassword'];
     if (isStudent) {
-      requiredFields.push('roomNumber');
+      requiredFields.push('id', 'roomNumber');
     }
 
     if (requiredFields.some(field => !formData[field as keyof typeof formData])) {
@@ -96,20 +97,22 @@ const SignUp = () => {
       return;
     }
 
-    // For admin users, set roomNumber to 'N/A'
+    // Create the user object
     const userData = {
       ...formData,
+      id: isStudent ? formData.id : 'N/A',
       roomNumber: isStudent ? formData.roomNumber : 'N/A',
       role,
     };
 
-    // Create the user object and save it
+    // Save user
     setTimeout(() => {
       try {
         saveUser({
           name: userData.name,
           id: userData.id,
           email: userData.email,
+          dormName: userData.dormName,
           roomNumber: userData.roomNumber,
           password: userData.password,
           role,
@@ -161,17 +164,19 @@ const SignUp = () => {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="id">Student/Employee ID</Label>
-                  <Input
-                    id="id"
-                    name="id"
-                    placeholder="20301XXX"
-                    value={formData.id}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+                {isStudent && (
+                  <div className="space-y-2">
+                    <Label htmlFor="id">Student ID</Label>
+                    <Input
+                      id="id"
+                      name="id"
+                      placeholder="20301XXX"
+                      value={formData.id}
+                      onChange={handleChange}
+                      required={isStudent}
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -187,6 +192,18 @@ const SignUp = () => {
                   <p className="text-xs text-gray-500">
                     Students: use @g.bracu.ac.bd | Administrators: use @bracu.ac.bd
                   </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dormName">Dorm Name</Label>
+                  <Input
+                    id="dormName"
+                    name="dormName"
+                    placeholder="North/South/East/West"
+                    value={formData.dormName}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 
                 {isStudent && (
