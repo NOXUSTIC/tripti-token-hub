@@ -1,14 +1,14 @@
-import React from 'react'
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from '@/components/ui/toast'
-import { Toaster as Sonner } from '@/components/ui/sonner'
-import { type ToasterToast } from '@/components/ui/sonner'
+
+import * as React from 'react'
+import { type Toast as SonnerToast } from 'sonner'
+
+type ToasterToast = SonnerToast & {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: React.ReactNode
+  open: boolean
+}
 
 type ToastAction = {
   type: 'ADD_TOAST'
@@ -38,10 +38,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(
     toastId,
     setTimeout(() => {
-      useToast.dispatch({
-        type: 'REMOVE_TOAST',
-        toastId: toastId,
-      })
+      useToast().dismiss(toastId)
     }, 800)
   )
 }
@@ -65,7 +62,7 @@ export const reducer = (state: State, action: ToastAction): State => {
     case 'DISMISS_TOAST': {
       const { toastId } = action
 
-      // ! Side effects ! - This could be improved
+      // Side effects - This could be improved
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -98,10 +95,33 @@ const generateId = () => {
   return Math.random().toString(36).substring(2)
 }
 
-export const useToast = () => {
-  const [state, dispatch] = React.useReducer(reducer, {
-    toasts: [],
-  } as State)
+// Singleton to store state across components
+const TOAST_STORE = {
+  state: { toasts: [] } as State,
+  listeners: new Set<React.Dispatch<React.SetStateAction<State>>>(),
+  
+  dispatch(action: ToastAction) {
+    TOAST_STORE.state = reducer(TOAST_STORE.state, action)
+    TOAST_STORE.listeners.forEach(listener => {
+      listener(TOAST_STORE.state)
+    })
+  },
+
+  subscribe(listener: React.Dispatch<React.SetStateAction<State>>) {
+    TOAST_STORE.listeners.add(listener)
+    return () => {
+      TOAST_STORE.listeners.delete(listener)
+    }
+  }
+}
+
+export function useToast() {
+  const [state, setState] = React.useState<State>(TOAST_STORE.state)
+
+  React.useEffect(() => {
+    const unsubscribe = TOAST_STORE.subscribe(setState)
+    return unsubscribe
+  }, [])
 
   const { toasts } = state
 
@@ -114,28 +134,29 @@ export const useToast = () => {
   }, [toasts])
 
   const toast = React.useCallback(
-    ({ ...props }: Omit<ToasterToast, 'id'>) => {
+    ({ ...props }: Omit<ToasterToast, 'id' | 'open'>) => {
       const id = generateId()
 
-      dispatch({
+      TOAST_STORE.dispatch({
         type: 'ADD_TOAST',
         toast: {
           ...props,
           id,
+          open: true,
         },
       })
     },
-    [dispatch]
+    []
   )
 
   const dismiss = React.useCallback(
     (toastId?: string) => {
-      dispatch({
+      TOAST_STORE.dispatch({
         type: 'DISMISS_TOAST',
         toastId: toastId,
       })
     },
-    [dispatch]
+    []
   )
 
   return {
@@ -145,4 +166,11 @@ export const useToast = () => {
   }
 }
 
-export const { Toaster } = Sonner
+// Helper function to directly call toast
+export const toast = ({ ...props }: Omit<ToasterToast, 'id' | 'open'>) => {
+  useToast().toast(props)
+}
+
+// Re-export Toaster from sonner
+import { Toaster } from "@/components/ui/sonner"
+export { Toaster }
