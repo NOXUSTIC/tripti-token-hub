@@ -6,8 +6,8 @@ import './index.css';
 import { clearAllUserData } from './utils/dataUtils.ts';
 
 // Clear all user data when the app starts
-// Note: In a production app, you would remove this line
 clearAllUserData();
+console.log("All user data cleared on app start");
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

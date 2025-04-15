@@ -6,7 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, getUsers, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users, Calendar } from 'lucide-react';
+import { LogOut, Search, Users, Calendar, Ticket } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type StudentData = {
   name: string;
@@ -17,11 +25,17 @@ type StudentData = {
   tokensAvailable: number;
 };
 
+const TOTAL_STUDENTS = 400;
+const TOKENS_PER_STUDENT = 1;
+const TOTAL_TOKENS = TOTAL_STUDENTS * TOKENS_PER_STUDENT;
+
 const StudentData = () => {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
   const [studentData, setStudentData] = useState<StudentData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [remainingTokens, setRemainingTokens] = useState(TOTAL_TOKENS);
   
   useEffect(() => {
     // Redirect if not logged in or not an admin
@@ -44,6 +58,11 @@ const StudentData = () => {
       }));
     
     setStudentData(students);
+    
+    // Calculate token statistics
+    const used = students.reduce((sum, student) => sum + student.tokensUsed, 0);
+    setTotalTokensUsed(used);
+    setRemainingTokens(TOTAL_TOKENS - used);
   }, [currentUser, navigate]);
 
   const handleLogout = () => {
@@ -92,7 +111,7 @@ const StudentData = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Total Students</CardTitle>
@@ -112,7 +131,7 @@ const StudentData = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-orange-500">
-                {studentData.reduce((sum, student) => sum + student.tokensUsed, 0)}
+                {totalTokensUsed}
               </div>
               <p className="text-sm text-gray-500">Across all students</p>
             </CardContent>
@@ -124,9 +143,21 @@ const StudentData = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">
-                {studentData.reduce((sum, student) => sum + student.tokensAvailable, 0)}
+                {remainingTokens}
               </div>
               <p className="text-sm text-gray-500">Ready to be used</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Total Capacity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-tripti-primary">
+                {TOTAL_TOKENS}
+              </div>
+              <p className="text-sm text-gray-500">Weekly token capacity</p>
             </CardContent>
           </Card>
         </div>
@@ -149,40 +180,40 @@ const StudentData = () => {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">Name</th>
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">ID</th>
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">Email</th>
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">Room</th>
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">Tokens Used</th>
-                    <th className="py-3 px-2 text-left font-medium text-gray-500">Available</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Room</TableHead>
+                    <TableHead>Tokens Used</TableHead>
+                    <TableHead>Available</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredStudents.length > 0 ? (
                     filteredStudents.map((student, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-2">{student.name}</td>
-                        <td className="py-3 px-2">{student.id}</td>
-                        <td className="py-3 px-2">{student.email}</td>
-                        <td className="py-3 px-2">{student.roomNumber}</td>
-                        <td className="py-3 px-2">{student.tokensUsed}</td>
-                        <td className="py-3 px-2">{student.tokensAvailable}</td>
-                      </tr>
+                      <TableRow key={index}>
+                        <TableCell>{student.name}</TableCell>
+                        <TableCell>{student.id}</TableCell>
+                        <TableCell>{student.email}</TableCell>
+                        <TableCell>{student.roomNumber}</TableCell>
+                        <TableCell>{student.tokensUsed}</TableCell>
+                        <TableCell>{student.tokensAvailable}</TableCell>
+                      </TableRow>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan={6} className="py-4 text-center text-gray-500">
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500">
                         {searchTerm 
                           ? "No students found matching your search" 
                           : "No students registered yet"}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>

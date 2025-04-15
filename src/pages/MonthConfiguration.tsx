@@ -38,43 +38,37 @@ const MonthConfiguration = () => {
       return;
     }
     
-    const generateMonths = () => {
-      const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      
-      const months = [];
-      for (let i = 0; i < 12; i++) {
-        const monthIndex = (currentMonth + i) % 12;
-        const year = currentYear + Math.floor((currentMonth + i) / 12);
-        months.push(`${monthNames[monthIndex]} ${year}`);
-      }
-      
-      return months;
-    };
-    
-    const loadMonths = () => {
-      const savedMonths = localStorage.getItem('configuredMonths');
-      const savedIsConfirmed = localStorage.getItem('monthsConfirmed');
-      
-      if (savedMonths) {
-        setSelectedMonths(JSON.parse(savedMonths));
-      }
-      
-      if (savedIsConfirmed) {
-        setIsConfirmed(JSON.parse(savedIsConfirmed));
-      }
-    };
-    
     // Generate months only once when component mounts
-    setMonths(generateMonths());
-    loadMonths();
-  }, [currentUser, navigate]); // Added proper dependency array
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const monthsList = [];
+    for (let i = 0; i < 12; i++) {
+      const monthIndex = (currentMonth + i) % 12;
+      const year = currentYear + Math.floor((currentMonth + i) / 12);
+      monthsList.push(`${monthNames[monthIndex]} ${year}`);
+    }
+    
+    setMonths(monthsList);
+    
+    // Load saved months
+    const savedMonths = localStorage.getItem('configuredMonths');
+    const savedIsConfirmed = localStorage.getItem('monthsConfirmed');
+    
+    if (savedMonths) {
+      setSelectedMonths(JSON.parse(savedMonths));
+    }
+    
+    if (savedIsConfirmed) {
+      setIsConfirmed(JSON.parse(savedIsConfirmed));
+    }
+  }, [currentUser, navigate]); // Only run this effect when these dependencies change
 
   const handleLogout = () => {
     logoutUser();
