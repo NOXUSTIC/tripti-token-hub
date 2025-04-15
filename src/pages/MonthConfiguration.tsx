@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -37,8 +36,9 @@ const MonthConfiguration = () => {
       navigate('/');
       return;
     }
-    
-    // Generate months only once when component mounts
+  }, [currentUser, navigate]);
+
+  useEffect(() => {
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
@@ -56,8 +56,9 @@ const MonthConfiguration = () => {
     }
     
     setMonths(monthsList);
-    
-    // Load saved months
+  }, []);
+
+  useEffect(() => {
     const savedMonths = localStorage.getItem('configuredMonths');
     const savedIsConfirmed = localStorage.getItem('monthsConfirmed');
     
@@ -68,7 +69,7 @@ const MonthConfiguration = () => {
     if (savedIsConfirmed) {
       setIsConfirmed(JSON.parse(savedIsConfirmed));
     }
-  }, [currentUser, navigate]); // Only run this effect when these dependencies change
+  }, []);
 
   const handleLogout = () => {
     logoutUser();
