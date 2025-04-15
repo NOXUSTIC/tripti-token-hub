@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
-import { LogOut, Calendar, Lock, Check } from 'lucide-react';
+import { LogOut, Calendar, Lock, Check, Users } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Dialog,
@@ -20,24 +21,42 @@ import {
   InputOTPGroup, 
   InputOTPSlot 
 } from "@/components/ui/input-otp";
+import {
+  getTokenStatistics,
+  getTotalTokens,
+  getUsedTokens,
+  getRemainingTokens
+} from '@/utils/tokenUtils';
 
 const MonthConfiguration = () => {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { toast } = useToast();
+  
+  // State variables
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [months, setMonths] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const [otp, setOtp] = useState('');
-  const { toast } = useToast();
+  const [tokenStats, setTokenStats] = useState<Array<{
+    month: string;
+    total: number;
+    used: number;
+    remaining: number;
+  }>>([]);
   
+  // Navigate away if not admin
   useEffect(() => {
-    if (!currentUser || currentUser.role !== 'admin') {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    
+    if (!user || user.role !== 'admin') {
       navigate('/');
-      return;
     }
-  }, [currentUser, navigate]);
+  }, [navigate]);
 
+  // Generate months list
   useEffect(() => {
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -58,19 +77,23 @@ const MonthConfiguration = () => {
     setMonths(monthsList);
   }, []);
 
+  // Load saved data
   useEffect(() => {
     const savedMonths = localStorage.getItem('configuredMonths');
     const savedIsConfirmed = localStorage.getItem('monthsConfirmed');
     
     if (savedMonths) {
-      setSelectedMonths(JSON.parse(savedMonths));
-    }
-    
-    if (savedIsConfirmed) {
-      setIsConfirmed(JSON.parse(savedIsConfirmed));
+      const parsedMonths = JSON.parse(savedMonths);
+      setSelectedMonths(parsedMonths);
+      
+      if (savedIsConfirmed && JSON.parse(savedIsConfirmed)) {
+        setIsConfirmed(true);
+        setTokenStats(getTokenStatistics());
+      }
     }
   }, []);
 
+  // Handlers
   const handleLogout = () => {
     logoutUser();
     navigate('/');
@@ -105,6 +128,7 @@ const MonthConfiguration = () => {
     localStorage.setItem('monthsConfirmed', JSON.stringify(true));
     
     setIsConfirmed(true);
+    setTokenStats(getTokenStatistics());
     
     toast({
       title: "Success",
@@ -147,6 +171,7 @@ const MonthConfiguration = () => {
     }
   };
 
+  // Don't render anything if no user
   if (!currentUser) {
     return null;
   }
@@ -249,6 +274,50 @@ const MonthConfiguration = () => {
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        )}
+        
+        {isConfirmed && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="mr-3 h-5 w-5" />
+                Token Statistics
+              </CardTitle>
+              <CardDescription>
+                Track token usage for each configured month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4">Month</th>
+                      <th className="text-center py-3 px-4">Total Tokens</th>
+                      <th className="text-center py-3 px-4">Used Tokens</th>
+                      <th className="text-center py-3 px-4">Remaining Tokens</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedMonths.map((month) => {
+                      const total = getTotalTokens();
+                      const used = getUsedTokens(month);
+                      const remaining = getRemainingTokens(month);
+                      
+                      return (
+                        <tr key={month} className="border-b">
+                          <td className="py-3 px-4">{month}</td>
+                          <td className="text-center py-3 px-4">{total}</td>
+                          <td className="text-center py-3 px-4">{used}</td>
+                          <td className="text-center py-3 px-4">{remaining}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         )}
