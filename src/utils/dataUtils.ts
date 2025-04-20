@@ -8,17 +8,30 @@
  * This includes users, tokens, and configuration settings
  */
 export const clearAllUserData = () => {
-  // Get all localStorage keys
-  const keys = Object.keys(localStorage);
+  const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
   
-  // Remove all user-related data
+  // Reset tokens to empty array
+  if (db.tokens) {
+    db.tokens = [];
+  }
+  
+  // Reset login logs to empty array
+  if (db.loginLogs) {
+    db.loginLogs = [];
+  }
+  
+  // Reset the database
+  localStorage.setItem('tripti_db', JSON.stringify(db));
+  
+  // Also clear any legacy token data
+  const keys = Object.keys(localStorage);
   keys.forEach(key => {
-    if (
-      key.startsWith('tripti_') || // User data
-      key.startsWith('tokens_') ||  // Token data
-      key === 'configuredMonths'    // Month configuration
-    ) {
+    if (key.startsWith('tokens_')) {
       localStorage.removeItem(key);
     }
   });
+  
+  // Clear session storage for current user
+  sessionStorage.removeItem('tripti_current_user');
 };
+
