@@ -1,8 +1,8 @@
 
 import { 
-  findUserByEmail, 
+  findUserByEmail as dbFindUserByEmail, 
   authenticateUser as dbAuthenticateUser,
-  createUser,
+  createUser as dbCreateUser,
   logoutUser as dbLogoutUser,
   User
 } from './localDatabase';
@@ -27,9 +27,14 @@ export const getUserRole = (email: string): 'student' | 'admin' | null => {
   return null;
 };
 
+// Find user by email (re-exported from localDatabase)
+export const findUserByEmail = (email: string): User | undefined => {
+  return dbFindUserByEmail(email);
+};
+
 // Save user to local storage
 export const saveUser = (user: Omit<User, 'id' | 'createdAt'>): void => {
-  createUser(user);
+  dbCreateUser(user);
 };
 
 // Get all users from local storage
