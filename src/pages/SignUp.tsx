@@ -35,7 +35,6 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if the email is for a student
     if (formData.email) {
       setIsStudent(formData.email.endsWith('@g.bracu.ac.bd'));
     }
@@ -58,7 +57,6 @@ const SignUp = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validate the form data
     const requiredFields = ['name', 'email', 'dormName', 'password', 'confirmPassword'];
     if (isStudent) {
       requiredFields.push('id', 'roomNumber');
@@ -74,7 +72,6 @@ const SignUp = () => {
       return;
     }
 
-    // Validate email format
     if (!isValidEmail(formData.email)) {
       toast({
         title: "Error",
@@ -85,7 +82,6 @@ const SignUp = () => {
       return;
     }
 
-    // Check if passwords match
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
@@ -96,7 +92,6 @@ const SignUp = () => {
       return;
     }
 
-    // Determine user role based on email domain
     const role = getUserRole(formData.email);
 
     if (!role) {
@@ -109,33 +104,24 @@ const SignUp = () => {
       return;
     }
 
-    // Create the user object
     const userData = {
-      ...formData,
-      id: isStudent ? formData.id : 'N/A',
+      name: formData.name,
+      email: formData.email,
+      dormName: formData.dormName,
       roomNumber: isStudent ? formData.roomNumber : 'N/A',
+      password: formData.password,
       role,
     };
 
-    // Save user
     setTimeout(() => {
       try {
-        saveUser({
-          name: userData.name,
-          id: userData.id,
-          email: userData.email,
-          dormName: userData.dormName,
-          roomNumber: userData.roomNumber,
-          password: userData.password,
-          role,
-        });
+        saveUser(userData);
 
         toast({
           title: "Success",
           description: "Your account has been created successfully!",
         });
 
-        // Redirect to login page
         navigate('/');
       } catch (error) {
         toast({
@@ -146,7 +132,7 @@ const SignUp = () => {
       } finally {
         setIsLoading(false);
       }
-    }, 1000); // Simulating network request
+    }, 1000);
   };
 
   return (
