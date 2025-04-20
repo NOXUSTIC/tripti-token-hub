@@ -1,13 +1,13 @@
 
-type User = {
-  name: string;
-  id: string;
-  email: string;
-  dormName: string;
-  roomNumber: string;
-  password: string;
-  role: 'student' | 'admin';
-};
+import { 
+  findUserByEmail, 
+  authenticateUser as dbAuthenticateUser,
+  createUser,
+  logoutUser as dbLogoutUser,
+  User
+} from './localDatabase';
+
+type UserWithoutPassword = Omit<User, 'password'>;
 
 // Check if the email is valid (student or admin domain)
 export const isValidEmail = (email: string): boolean => {
@@ -28,47 +28,46 @@ export const getUserRole = (email: string): 'student' | 'admin' | null => {
 };
 
 // Save user to local storage
-export const saveUser = (user: User): void => {
-  const users = getUsers();
-  users.push(user);
-  localStorage.setItem('tripti_users', JSON.stringify(users));
+export const saveUser = (user: Omit<User, 'id' | 'createdAt'>): void => {
+  createUser(user);
 };
 
 // Get all users from local storage
-export const getUsers = (): User[] => {
-  const usersJson = localStorage.getItem('tripti_users');
-  return usersJson ? JSON.parse(usersJson) : [];
-};
-
-// Find user by email
-export const findUserByEmail = (email: string): User | undefined => {
-  const users = getUsers();
-  return users.find(user => user.email === email);
+export const getUsers = (): UserWithoutPassword[] => {
+  const users = JSON.parse(localStorage.getItem('tripti_users') || '[]');
+  return users.map((user: User) => {
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  });
 };
 
 // Authenticate user with email and password
-export const authenticateUser = (email: string, password: string): User | null => {
-  const user = findUserByEmail(email);
-  if (user && user.password === password) {
-    return user;
+export const authenticateUser = (email: string, password: string): UserWithoutPassword | null => {
+  const user = dbAuthenticateUser(email, password);
+  if (user) {
+    const { password, ...userWithoutPassword } = user; 
+    return userWithoutPassword;
   }
   return null;
 };
 
 // Store authenticated user in session
-export const setCurrentUser = (user: User): void => {
-  const { password, ...userWithoutPassword } = user; // Don't store password in session
-  sessionStorage.setItem('tripti_current_user', JSON.stringify(userWithoutPassword));
+export const setCurrentUser = (user: UserWithoutPassword): void => {
+  sessionStorage.setItem('tripti_current_user', JSON.stringify(user));
 };
 
 // Get current authenticated user
-export const getCurrentUser = (): Omit<User, 'password'> | null => {
+export const getCurrentUser = (): UserWithoutPassword | null => {
   const userJson = sessionStorage.getItem('tripti_current_user');
   return userJson ? JSON.parse(userJson) : null;
 };
 
 // Log out user
 export const logoutUser = (): void => {
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    dbLogoutUser(currentUser.id, currentUser.name, currentUser.role);
+  }
   sessionStorage.removeItem('tripti_current_user');
 };
 

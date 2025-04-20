@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
 import { LogOut, Calendar, Lock, Check, Users } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
@@ -21,12 +20,7 @@ import {
   InputOTPGroup, 
   InputOTPSlot 
 } from "@/components/ui/input-otp";
-import {
-  getTokenStatistics,
-  getTotalTokens,
-  getUsedTokens,
-  getRemainingTokens
-} from '@/utils/tokenUtils';
+import { getTokenStatistics } from '@/utils/tokenUtils';
 
 const MonthConfiguration = () => {
   const navigate = useNavigate();
@@ -53,7 +47,14 @@ const MonthConfiguration = () => {
     
     if (!user || user.role !== 'admin') {
       navigate('/');
+      return;
     }
+    
+    // Show welcome toast
+    toast({
+      title: "Welcome Admin",
+      description: "Configure token months here"
+    });
   }, [navigate]);
 
   // Generate months list
@@ -95,6 +96,11 @@ const MonthConfiguration = () => {
 
   // Handlers
   const handleLogout = () => {
+    toast({
+      title: "Logging out",
+      description: "You've been logged out successfully"
+    });
+    
     logoutUser();
     navigate('/');
   };
@@ -118,8 +124,7 @@ const MonthConfiguration = () => {
     if (selectedMonths.length !== 3) {
       toast({
         title: "Error",
-        description: "Please select exactly 3 months",
-        variant: "destructive",
+        description: "Please select exactly 3 months"
       });
       return;
     }
@@ -132,7 +137,7 @@ const MonthConfiguration = () => {
     
     toast({
       title: "Success",
-      description: "Months configured successfully",
+      description: "Months configured successfully"
     });
   };
 
@@ -142,7 +147,7 @@ const MonthConfiguration = () => {
     
     toast({
       title: "OTP Sent",
-      description: "An OTP has been sent to your email",
+      description: "An OTP has been sent to your email"
     });
     
     setShowOtpDialog(true);
@@ -160,13 +165,12 @@ const MonthConfiguration = () => {
       
       toast({
         title: "Success",
-        description: "You can now edit the months",
+        description: "You can now edit the months"
       });
     } else {
       toast({
         title: "Error",
-        description: "Invalid OTP. Please try again",
-        variant: "destructive",
+        description: "Invalid OTP. Please try again"
       });
     }
   };
@@ -301,20 +305,14 @@ const MonthConfiguration = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedMonths.map((month) => {
-                      const total = getTotalTokens();
-                      const used = getUsedTokens(month);
-                      const remaining = getRemainingTokens(month);
-                      
-                      return (
-                        <tr key={month} className="border-b">
-                          <td className="py-3 px-4">{month}</td>
-                          <td className="text-center py-3 px-4">{total}</td>
-                          <td className="text-center py-3 px-4">{used}</td>
-                          <td className="text-center py-3 px-4">{remaining}</td>
-                        </tr>
-                      );
-                    })}
+                    {tokenStats.map((stat) => (
+                      <tr key={stat.month} className="border-b">
+                        <td className="py-3 px-4">{stat.month}</td>
+                        <td className="text-center py-3 px-4">{stat.total}</td>
+                        <td className="text-center py-3 px-4">{stat.used}</td>
+                        <td className="text-center py-3 px-4">{stat.remaining}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

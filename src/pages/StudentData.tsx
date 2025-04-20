@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
-import { getCurrentUser, getUsers, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users, Calendar, Ticket } from 'lucide-react';
+import { getCurrentUser, logoutUser } from '@/utils/authUtils';
+import { LogOut, Search, Users, Calendar } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -15,6 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getStudents } from "@/utils/localDatabase";
+import { getTotalTokens, getUsedTokens, getRemainingTokens } from "@/utils/tokenUtils";
 
 type StudentData = {
   name: string;
@@ -25,17 +28,15 @@ type StudentData = {
   tokensAvailable: number;
 };
 
-const TOTAL_STUDENTS = 400;
-const TOKENS_PER_STUDENT = 1;
-const TOTAL_TOKENS = TOTAL_STUDENTS * TOKENS_PER_STUDENT;
-
 const StudentData = () => {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [studentData, setStudentData] = useState<StudentData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
-  const [remainingTokens, setRemainingTokens] = useState(TOTAL_TOKENS);
+  const [remainingTokens, setRemainingTokens] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
   
   useEffect(() => {
     // Redirect if not logged in or not an admin
@@ -44,28 +45,55 @@ const StudentData = () => {
       return;
     }
     
-    // Generate mock student data based on registered users
-    const users = getUsers();
-    const students = users
-      .filter(user => user.role === 'student')
-      .map(user => ({
-        name: user.name,
-        id: user.id,
-        email: user.email,
-        roomNumber: user.roomNumber,
-        tokensUsed: Math.floor(Math.random() * 5),
-        tokensAvailable: Math.floor(Math.random() * 10) + 1,
-      }));
+    // Show welcome toast
+    toast({
+      title: "Welcome Admin",
+      description: "You're logged in to the admin dashboard"
+    });
     
-    setStudentData(students);
+    // Load student data
+    loadStudentData();
     
-    // Calculate token statistics
-    const used = students.reduce((sum, student) => sum + student.tokensUsed, 0);
-    setTotalTokensUsed(used);
-    setRemainingTokens(TOTAL_TOKENS - used);
   }, [currentUser, navigate]);
+  
+  const loadStudentData = () => {
+    // Get students from database
+    const students = getStudents();
+    
+    // Get configured months from localStorage
+    const configuredMonths = JSON.parse(localStorage.getItem('configuredMonths') || '[]');
+    const currentMonth = configuredMonths.length > 0 ? configuredMonths[0] : '';
+    
+    // Calculate token statistics for current month
+    const total = getTotalTokens();
+    const used = currentMonth ? getUsedTokens(currentMonth) : 0;
+    const remaining = currentMonth ? getRemainingTokens(currentMonth) : total;
+    
+    setTotalTokens(total);
+    setTotalTokensUsed(used);
+    setRemainingTokens(remaining);
+    
+    // Transform students into the required format
+    const studentDataList = students.map(student => {
+      return {
+        name: student.name,
+        id: student.id,
+        email: student.email,
+        roomNumber: student.roomNumber,
+        tokensUsed: Math.floor(Math.random() * 5), // We'll replace this with actual data later
+        tokensAvailable: Math.floor(Math.random() * 10) + 1, // We'll replace this with actual data later
+      };
+    });
+    
+    setStudentData(studentDataList);
+  };
 
   const handleLogout = () => {
+    toast({
+      title: "Logging out",
+      description: "You've been logged out successfully"
+    });
+    
     logoutUser();
     navigate('/');
   };
@@ -155,7 +183,7 @@ const StudentData = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-tripti-primary">
-                {TOTAL_TOKENS}
+                {totalTokens}
               </div>
               <p className="text-sm text-gray-500">Weekly token capacity</p>
             </CardContent>

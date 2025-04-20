@@ -1,12 +1,12 @@
 
 import * as React from 'react'
-import { type Toast as SonnerToast } from 'sonner'
+import type { ToastActionElement, ToastProps } from '@/components/ui/toast'
 
-type ToasterToast = SonnerToast & {
+type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: React.ReactNode
+  action?: ToastActionElement
   open: boolean
 }
 
@@ -145,6 +145,16 @@ export function useToast() {
           open: true,
         },
       })
+
+      // Auto dismiss toast after 0.5 seconds
+      setTimeout(() => {
+        TOAST_STORE.dispatch({
+          type: 'DISMISS_TOAST',
+          toastId: id,
+        })
+      }, 500);
+
+      return id;
     },
     []
   )
@@ -167,8 +177,8 @@ export function useToast() {
 }
 
 // Helper function to directly call toast
-export const toast = ({ ...props }: Omit<ToasterToast, 'id' | 'open'>) => {
-  useToast().toast(props)
+export const toast = (props: Omit<ToasterToast, 'id' | 'open'>) => {
+  return useToast().toast(props);
 }
 
 // Re-export Toaster from sonner
