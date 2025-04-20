@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getStudents } from "@/utils/localDatabase";
+import { getStudents, getTokensByStudent } from "@/utils/localDatabase";
 import { getTotalTokens, getUsedTokens, getRemainingTokens } from "@/utils/tokenUtils";
 
 type StudentData = {
@@ -73,15 +73,24 @@ const StudentData = () => {
     setTotalTokensUsed(used);
     setRemainingTokens(remaining);
     
-    // Transform students into the required format
+    // Transform students into the required format with actual token usage data
     const studentDataList = students.map(student => {
+      // Get tokens used by this student
+      const studentTokens = getTokensByStudent(student.id);
+      const tokensUsedByStudent = studentTokens.length;
+      
+      // For available tokens, we'll use the monthly allocation minus used tokens
+      // In a real system, this might be more complex based on specific business rules
+      const tokensAvailable = currentMonth ? 
+        Math.max(0, Math.floor(total / students.length) - tokensUsedByStudent) : 0;
+      
       return {
         name: student.name,
         id: student.id,
         email: student.email,
         roomNumber: student.roomNumber,
-        tokensUsed: Math.floor(Math.random() * 5), // We'll replace this with actual data later
-        tokensAvailable: Math.floor(Math.random() * 10) + 1, // We'll replace this with actual data later
+        tokensUsed: tokensUsedByStudent,
+        tokensAvailable: tokensAvailable,
       };
     });
     
