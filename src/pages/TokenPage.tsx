@@ -176,7 +176,7 @@ const TokenPage = () => {
         title: "Success",
         description: "All student data has been cleared.",
       });
-      window.location.reload();
+      navigate('/');
     }
   };
 
