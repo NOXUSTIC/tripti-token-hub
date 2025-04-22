@@ -18,6 +18,11 @@ export const clearAllUserData = () => {
   if (db.loginLogs) {
     db.loginLogs = [];
   }
+
+  // Reset users array but keep admin accounts
+  if (db.users) {
+    db.users = db.users.filter((user: any) => user.role === 'admin');
+  }
   
   // Reset the database
   localStorage.setItem('tripti_db', JSON.stringify(db));

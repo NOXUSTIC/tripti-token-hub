@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
 import { LogOut, Beef, Fish, Drumstick, Wheat, Check, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { clearStudentTokenData } from '@/utils/dataUtils';
+import { clearStudentTokenData, clearAllUserData } from '@/utils/dataUtils';
 import { 
   Dialog,
   DialogContent,
@@ -169,6 +169,17 @@ const TokenPage = () => {
     window.location.reload();
   };
 
+  const handleClearAllData = () => {
+    if (window.confirm('Are you sure you want to clear all student data? This action cannot be undone.')) {
+      clearAllUserData();
+      toast({
+        title: "Success",
+        description: "All student data has been cleared.",
+      });
+      window.location.reload();
+    }
+  };
+
   if (!currentUser) {
     return null;
   }
@@ -183,6 +194,15 @@ const TokenPage = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-tripti-dark">Token Management</h1>
           <div className="flex gap-4">
+            {currentUser?.role === 'admin' && (
+              <Button 
+                variant="destructive" 
+                className="flex items-center gap-2"
+                onClick={handleClearAllData}
+              >
+                Clear All Student Data
+              </Button>
+            )}
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
