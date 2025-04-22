@@ -11,7 +11,16 @@ import {
  * Gets the number of used tokens for a specific month
  */
 export const getUsedTokens = (month: string): number => {
-  return getUsedTokensCount(month);
+  // Get all tokens directly from localStorage
+  const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
+  const allTokens = db.tokens || [];
+  
+  // If month is provided, filter by month, otherwise return all tokens
+  if (month) {
+    return allTokens.filter((token: any) => token.month === month).length;
+  }
+  
+  return allTokens.length;
 };
 
 /**
@@ -25,7 +34,9 @@ export const getTotalTokens = (): number => {
  * Gets the remaining tokens for a specific month
  */
 export const getRemainingTokens = (month: string): number => {
-  return getRemainingTokensCount(month);
+  const total = getTotalTokens();
+  const used = getUsedTokens(month);
+  return total - used;
 };
 
 /**

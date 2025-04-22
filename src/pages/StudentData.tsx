@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users, Calendar, Utensils } from 'lucide-react';
+import { LogOut, Search, Users, Calendar, Utensils, RefreshCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -66,14 +66,19 @@ const StudentData = () => {
   }, [currentUser, navigate]);
   
   const loadStudentData = () => {
+    // Get fresh data from localStorage
     const students = getStudents();
     
     const configuredMonths = JSON.parse(localStorage.getItem('configuredMonths') || '[]');
     const currentMonth = configuredMonths.length > 0 ? configuredMonths[0] : '';
     
+    // Get all tokens for all students, not just filtered by month
+    const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
+    const allTokens = db.tokens || [];
+    
     const total = getTotalTokens();
-    const used = currentMonth ? getUsedTokens(currentMonth) : 0;
-    const remaining = currentMonth ? getRemainingTokens(currentMonth) : total;
+    const used = allTokens.length; // Count all tokens, not filtered by month
+    const remaining = total - used;
     
     setTotalTokens(total);
     setTotalTokensUsed(used);
@@ -86,14 +91,11 @@ const StudentData = () => {
       fish: 0
     } as FoodStats;
     
-    // Count food preferences from tokens
-    students.forEach(student => {
-      const tokens = getTokensByStudent(student.id);
-      tokens.forEach(token => {
-        if (token.foodType && foodCounts[token.foodType as keyof FoodStats] !== undefined) {
-          foodCounts[token.foodType as keyof FoodStats]++;
-        }
-      });
+    // Count food preferences from all tokens
+    allTokens.forEach((token: any) => {
+      if (token.foodType && foodCounts[token.foodType as keyof FoodStats] !== undefined) {
+        foodCounts[token.foodType as keyof FoodStats]++;
+      }
     });
     
     setFoodStats(foodCounts);
@@ -102,8 +104,7 @@ const StudentData = () => {
       const studentTokens = getTokensByStudent(student.id);
       const tokensUsedByStudent = studentTokens.length;
       
-      const tokensAvailable = currentMonth ? 
-        Math.max(0, Math.floor(total / students.length) - tokensUsedByStudent) : 0;
+      const tokensAvailable = Math.max(0, Math.floor(total / (students.length || 1)) - tokensUsedByStudent);
       
       return {
         name: student.name,
@@ -116,6 +117,14 @@ const StudentData = () => {
     });
     
     setStudentData(studentDataList);
+  };
+
+  const handleRefresh = () => {
+    loadStudentData();
+    toast({
+      title: "Data Refreshed",
+      description: "Student data has been refreshed"
+    });
   };
 
   const handleLogout = () => {
@@ -149,6 +158,14 @@ const StudentData = () => {
             <p className="text-gray-600">Manage students and their token allocations</p>
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="default"
+              className="flex items-center gap-2"
+              onClick={handleRefresh}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh Data
+            </Button>
             <Button 
               variant="default"
               className="flex items-center gap-2"
