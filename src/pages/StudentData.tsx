@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users, Calendar } from 'lucide-react';
+import { LogOut, Search, Users, Calendar, Beef, Chicken, Fish, Mutton } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -28,6 +27,13 @@ type StudentData = {
   tokensAvailable: number;
 };
 
+type FoodStats = {
+  chicken: number;
+  beef: number;
+  mutton: number;
+  fish: number;
+};
+
 const StudentData = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -37,34 +43,33 @@ const StudentData = () => {
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [remainingTokens, setRemainingTokens] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
+  const [foodStats, setFoodStats] = useState<FoodStats>({
+    chicken: 0,
+    beef: 0,
+    mutton: 0,
+    fish: 0
+  });
   
   useEffect(() => {
-    // Redirect if not logged in or not an admin
     if (!currentUser || currentUser.role !== 'admin') {
       navigate('/');
       return;
     }
     
-    // Show welcome toast
     toast({
       title: "Welcome Admin",
       description: "You're logged in to the admin dashboard"
     });
     
-    // Load student data
     loadStudentData();
-    
   }, [currentUser, navigate]);
   
   const loadStudentData = () => {
-    // Get students from database
     const students = getStudents();
     
-    // Get configured months from localStorage
     const configuredMonths = JSON.parse(localStorage.getItem('configuredMonths') || '[]');
     const currentMonth = configuredMonths.length > 0 ? configuredMonths[0] : '';
     
-    // Calculate token statistics for current month
     const total = getTotalTokens();
     const used = currentMonth ? getUsedTokens(currentMonth) : 0;
     const remaining = currentMonth ? getRemainingTokens(currentMonth) : total;
@@ -73,14 +78,26 @@ const StudentData = () => {
     setTotalTokensUsed(used);
     setRemainingTokens(remaining);
     
-    // Transform students into the required format with actual token usage data
+    const foodCounts = students.reduce((acc, student) => {
+      const tokens = getTokensByStudent(student.id);
+      const latestToken = tokens[tokens.length - 1];
+      if (latestToken) {
+        acc[latestToken.foodType as keyof FoodStats]++;
+      }
+      return acc;
+    }, {
+      chicken: 0,
+      beef: 0,
+      mutton: 0,
+      fish: 0
+    } as FoodStats);
+    
+    setFoodStats(foodCounts);
+    
     const studentDataList = students.map(student => {
-      // Get tokens used by this student
       const studentTokens = getTokensByStudent(student.id);
       const tokensUsedByStudent = studentTokens.length;
       
-      // For available tokens, we'll use the monthly allocation minus used tokens
-      // In a real system, this might be more complex based on specific business rules
       const tokensAvailable = currentMonth ? 
         Math.max(0, Math.floor(total / students.length) - tokensUsedByStudent) : 0;
       
@@ -113,7 +130,6 @@ const StudentData = () => {
     student.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Don't render anything if no current user (prevents flash before redirect)
   if (!currentUser) {
     return null;
   }
@@ -195,6 +211,60 @@ const StudentData = () => {
                 {totalTokens}
               </div>
               <p className="text-sm text-gray-500">Weekly token capacity</p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Chicken Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center">
+              <Chicken className="h-8 w-8 text-tripti-primary mr-3" />
+              <div>
+                <div className="text-3xl font-bold">{foodStats.chicken}</div>
+                <p className="text-sm text-gray-500">Students</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Beef Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center">
+              <Beef className="h-8 w-8 text-tripti-primary mr-3" />
+              <div>
+                <div className="text-3xl font-bold">{foodStats.beef}</div>
+                <p className="text-sm text-gray-500">Students</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Mutton Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center">
+              <Mutton className="h-8 w-8 text-tripti-primary mr-3" />
+              <div>
+                <div className="text-3xl font-bold">{foodStats.mutton}</div>
+                <p className="text-sm text-gray-500">Students</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Fish Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center">
+              <Fish className="h-8 w-8 text-tripti-primary mr-3" />
+              <div>
+                <div className="text-3xl font-bold">{foodStats.fish}</div>
+                <p className="text-sm text-gray-500">Students</p>
+              </div>
             </CardContent>
           </Card>
         </div>
