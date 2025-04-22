@@ -112,7 +112,7 @@ const StudentData = () => {
         email: student.email,
         roomNumber: student.roomNumber,
         tokensUsed: tokensUsedByStudent,
-        tokensAvailable: tokensAvailable,
+        tokensAvailable: remaining,
       };
     });
     
