@@ -1,4 +1,3 @@
-
 /**
  * Local Database Management System using localStorage
  * 
@@ -32,6 +31,7 @@ export interface TokenRecord {
   dormName: string;
   roomNumber: string;
   date: string;
+  foodType?: 'chicken' | 'beef' | 'mutton' | 'fish';
 }
 
 export interface LoginLog {
@@ -147,7 +147,8 @@ export const createTokenRecord = (
   studentId: string,
   studentName: string,
   dormName: string,
-  roomNumber: string
+  roomNumber: string,
+  foodType?: 'chicken' | 'beef' | 'mutton' | 'fish'
 ): TokenRecord => {
   const db = getDatabase();
   
@@ -158,7 +159,8 @@ export const createTokenRecord = (
     studentName,
     dormName,
     roomNumber,
-    date: new Date().toISOString()
+    date: new Date().toISOString(),
+    foodType
   };
   
   db.tokens.push(tokenRecord);

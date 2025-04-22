@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
-import { LogOut, Search, Users, Calendar, Beef, Chicken, Fish, Mutton } from 'lucide-react';
+import { LogOut, Search, Users, Calendar, Utensils } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -78,19 +79,22 @@ const StudentData = () => {
     setTotalTokensUsed(used);
     setRemainingTokens(remaining);
     
-    const foodCounts = students.reduce((acc, student) => {
-      const tokens = getTokensByStudent(student.id);
-      const latestToken = tokens[tokens.length - 1];
-      if (latestToken) {
-        acc[latestToken.foodType as keyof FoodStats]++;
-      }
-      return acc;
-    }, {
+    const foodCounts = {
       chicken: 0,
       beef: 0,
       mutton: 0,
       fish: 0
-    } as FoodStats);
+    } as FoodStats;
+    
+    // Count food preferences from tokens
+    students.forEach(student => {
+      const tokens = getTokensByStudent(student.id);
+      tokens.forEach(token => {
+        if (token.foodType && foodCounts[token.foodType as keyof FoodStats] !== undefined) {
+          foodCounts[token.foodType as keyof FoodStats]++;
+        }
+      });
+    });
     
     setFoodStats(foodCounts);
     
@@ -221,7 +225,7 @@ const StudentData = () => {
               <CardTitle className="text-lg">Chicken Orders</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center">
-              <Chicken className="h-8 w-8 text-tripti-primary mr-3" />
+              <Utensils className="h-8 w-8 text-tripti-primary mr-3" />
               <div>
                 <div className="text-3xl font-bold">{foodStats.chicken}</div>
                 <p className="text-sm text-gray-500">Students</p>
@@ -234,7 +238,7 @@ const StudentData = () => {
               <CardTitle className="text-lg">Beef Orders</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center">
-              <Beef className="h-8 w-8 text-tripti-primary mr-3" />
+              <Utensils className="h-8 w-8 text-tripti-primary mr-3" />
               <div>
                 <div className="text-3xl font-bold">{foodStats.beef}</div>
                 <p className="text-sm text-gray-500">Students</p>
@@ -247,7 +251,7 @@ const StudentData = () => {
               <CardTitle className="text-lg">Mutton Orders</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center">
-              <Mutton className="h-8 w-8 text-tripti-primary mr-3" />
+              <Utensils className="h-8 w-8 text-tripti-primary mr-3" />
               <div>
                 <div className="text-3xl font-bold">{foodStats.mutton}</div>
                 <p className="text-sm text-gray-500">Students</p>
@@ -260,7 +264,7 @@ const StudentData = () => {
               <CardTitle className="text-lg">Fish Orders</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center">
-              <Fish className="h-8 w-8 text-tripti-primary mr-3" />
+              <Utensils className="h-8 w-8 text-tripti-primary mr-3" />
               <div>
                 <div className="text-3xl font-bold">{foodStats.fish}</div>
                 <p className="text-sm text-gray-500">Students</p>
