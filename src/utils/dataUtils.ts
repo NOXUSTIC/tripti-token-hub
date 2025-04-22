@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for managing data in the application
  */
@@ -35,3 +34,18 @@ export const clearAllUserData = () => {
   sessionStorage.removeItem('tripti_current_user');
 };
 
+/**
+ * Clears token data for a specific student
+ * @param studentId The ID of the student whose data should be cleared
+ */
+export const clearStudentTokenData = (studentId: string): void => {
+  const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
+  
+  // Remove all tokens for this student
+  if (db.tokens) {
+    db.tokens = db.tokens.filter((token: any) => token.studentId !== studentId);
+  }
+  
+  // Save the updated database
+  localStorage.setItem('tripti_db', JSON.stringify(db));
+};

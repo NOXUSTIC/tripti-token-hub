@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
-import { LogOut, Beef, Fish, Drumstick, Wheat, Check } from 'lucide-react';
+import { LogOut, Beef, Fish, Drumstick, Wheat, Check, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { clearStudentTokenData } from '@/utils/dataUtils';
 import { 
   Dialog,
   DialogContent,
@@ -16,7 +16,6 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 
-// Token types
 const TOKEN_TYPES = [
   { id: 'chicken', name: 'Chicken', icon: Drumstick },
   { id: 'beef', name: 'Beef', icon: Beef },
@@ -37,23 +36,19 @@ const TokenPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect if not logged in or not a student
     if (!currentUser || currentUser.role !== 'student') {
       navigate('/');
       return;
     }
 
-    // Load configured months
     const configuredMonths = localStorage.getItem('configuredMonths');
     if (configuredMonths) {
       const months = JSON.parse(configuredMonths);
       setAvailableMonths(months);
       
-      // Calculate number of Fridays in the selected months
       calculateTotalFridays(months);
     }
     
-    // Load used tokens (in a real app, this would come from a database)
     const userTokens = localStorage.getItem(`tokens_${currentUser.id}`);
     if (userTokens) {
       setUsedTokens(JSON.parse(userTokens).length);
@@ -62,7 +57,6 @@ const TokenPage = () => {
     }
   }, [currentUser, navigate]);
 
-  // Calculate the number of Fridays in the given months
   const calculateTotalFridays = (months: string[]) => {
     let totalFridays = 0;
     
@@ -70,7 +64,6 @@ const TokenPage = () => {
       const [monthName, yearStr] = monthStr.split(' ');
       const year = parseInt(yearStr);
       
-      // Convert month name to month index (0-11)
       const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
@@ -78,13 +71,11 @@ const TokenPage = () => {
       const monthIndex = monthNames.indexOf(monthName);
       
       if (monthIndex !== -1) {
-        // Get the number of days in the month
         const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
         
-        // Count Fridays in the month
         for (let day = 1; day <= daysInMonth; day++) {
           const date = new Date(year, monthIndex, day);
-          if (date.getDay() === 5) { // 5 is Friday
+          if (date.getDay() === 5) {
             totalFridays++;
           }
         }
@@ -106,19 +97,16 @@ const TokenPage = () => {
     
     if (userTokens.length === 0) return false;
     
-    // Get the current date
     const now = new Date();
     
-    // Get the start and end of the current week
     const currentWeekStart = new Date(now);
-    currentWeekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+    currentWeekStart.setDate(now.getDate() - now.getDay());
     currentWeekStart.setHours(0, 0, 0, 0);
     
     const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekStart.getDate() + 6); // End of week (Saturday)
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
     currentWeekEnd.setHours(23, 59, 59, 999);
     
-    // Check if user has already used a token this week
     const tokenThisWeek = userTokens.some((token: { date: string }) => {
       const tokenDate = new Date(token.date);
       return tokenDate >= currentWeekStart && tokenDate <= currentWeekEnd;
@@ -145,7 +133,6 @@ const TokenPage = () => {
   const confirmTokenSelection = () => {
     if (!currentUser) return;
     
-    // Store the selected token (in a real app, this would be saved to a database)
     const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
     userTokens.push({
       type: selectedToken,
@@ -159,7 +146,6 @@ const TokenPage = () => {
       description: `You have confirmed ${selectedToken} token. This will be available on Fridays.`,
     });
     
-    // Reset selection state
     setSelectedToken(null);
     setIsConfirming(false);
     setShowTokenOptions(false);
@@ -170,12 +156,23 @@ const TokenPage = () => {
     setIsConfirming(false);
   };
 
-  // Don't render anything if no current user (prevents flash before redirect)
+  const handleResetData = () => {
+    if (!currentUser) return;
+    
+    clearStudentTokenData(currentUser.id);
+    setUsedTokens(0);
+    toast({
+      title: "Data Reset",
+      description: "Your token data has been successfully reset.",
+    });
+    
+    window.location.reload();
+  };
+
   if (!currentUser) {
     return null;
   }
 
-  // Calculate available tokens
   const availableTokens = totalFridays - usedTokens;
 
   return (
@@ -185,14 +182,24 @@ const TokenPage = () => {
       <div className="container mx-auto px-4 py-8 flex-1">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-tripti-dark">Token Management</h1>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleResetData}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reset My Data
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
         
         <div className="mb-8">
