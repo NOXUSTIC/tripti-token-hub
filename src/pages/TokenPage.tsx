@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import Header from '@/components/Header';
 import { getCurrentUser, logoutUser } from '@/utils/authUtils';
 import { LogOut, Beef, Fish, Drumstick, Wheat, Check, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { clearStudentTokenData, clearAllUserData } from '@/utils/dataUtils';
+import { clearStudentTokenData, clearAllUserData, getStudentTokenData } from '@/utils/dataUtils';
 import { 
   Dialog,
   DialogContent,
@@ -49,12 +50,10 @@ const TokenPage = () => {
       calculateTotalFridays(months);
     }
     
-    const userTokens = localStorage.getItem(`tokens_${currentUser.id}`);
-    if (userTokens) {
-      setUsedTokens(JSON.parse(userTokens).length);
-    } else {
-      setUsedTokens(0);
-    }
+    // Get tokens from the centralized database
+    const userTokens = getStudentTokenData(currentUser.id);
+    setUsedTokens(userTokens.length);
+    
   }, [currentUser, navigate]);
 
   const calculateTotalFridays = (months: string[]) => {
@@ -93,7 +92,7 @@ const TokenPage = () => {
   const checkWeeklyTokenLimit = () => {
     if (!currentUser) return true;
     
-    const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
+    const userTokens = getStudentTokenData(currentUser.id);
     
     if (userTokens.length === 0) return false;
     
@@ -107,7 +106,7 @@ const TokenPage = () => {
     currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
     currentWeekEnd.setHours(23, 59, 59, 999);
     
-    const tokenThisWeek = userTokens.some((token: { date: string }) => {
+    const tokenThisWeek = userTokens.some((token: any) => {
       const tokenDate = new Date(token.date);
       return tokenDate >= currentWeekStart && tokenDate <= currentWeekEnd;
     });
@@ -133,13 +132,21 @@ const TokenPage = () => {
   const confirmTokenSelection = () => {
     if (!currentUser) return;
     
-    const userTokens = JSON.parse(localStorage.getItem(`tokens_${currentUser.id}`) || '[]');
-    userTokens.push({
+    // Store in the centralized database
+    const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
+    if (!db.tokens) db.tokens = [];
+    
+    db.tokens.push({
       type: selectedToken,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      studentId: currentUser.id,
+      foodType: selectedToken
     });
-    localStorage.setItem(`tokens_${currentUser.id}`, JSON.stringify(userTokens));
-    setUsedTokens(userTokens.length);
+    
+    localStorage.setItem('tripti_db', JSON.stringify(db));
+    
+    // Update the local state
+    setUsedTokens(prev => prev + 1);
     
     toast({
       title: "Token Confirmed",
@@ -165,8 +172,6 @@ const TokenPage = () => {
       title: "Data Reset",
       description: "Your token data has been successfully reset.",
     });
-    
-    window.location.reload();
   };
 
   const handleClearAllData = () => {
@@ -438,3 +443,4 @@ const TokenPage = () => {
 };
 
 export default TokenPage;
+

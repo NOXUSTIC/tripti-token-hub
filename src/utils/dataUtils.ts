@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for managing data in the application
  */
@@ -44,6 +45,7 @@ export const clearAllUserData = () => {
  * @param studentId The ID of the student whose data should be cleared
  */
 export const clearStudentTokenData = (studentId: string): void => {
+  // Clear the centralized tokens database
   const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
   
   // Remove all tokens for this student
@@ -53,4 +55,20 @@ export const clearStudentTokenData = (studentId: string): void => {
   
   // Save the updated database
   localStorage.setItem('tripti_db', JSON.stringify(db));
+  
+  // Clear the legacy token storage if it exists
+  localStorage.removeItem(`tokens_${studentId}`);
 };
+
+/**
+ * Gets token data for a specific student
+ * @param studentId The ID of the student
+ * @returns An array of tokens for the student
+ */
+export const getStudentTokenData = (studentId: string): any[] => {
+  // Get from centralized database
+  const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
+  const tokens = db.tokens || [];
+  return tokens.filter((token: any) => token.studentId === studentId);
+};
+
