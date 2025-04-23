@@ -62,28 +62,40 @@ const StudentData = () => {
       description: "You're logged in to the admin dashboard"
     });
     
+    // Initial load
     loadStudentData();
+    
+    // Set up real-time updates every 5 seconds
+    const intervalId = setInterval(() => {
+      loadStudentData();
+    }, 5000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, [currentUser, navigate]);
   
   const loadStudentData = () => {
     // Get fresh data from localStorage
     const students = getStudents();
     
-    const configuredMonths = JSON.parse(localStorage.getItem('configuredMonths') || '[]');
-    const currentMonth = configuredMonths.length > 0 ? configuredMonths[0] : '';
-    
-    // Get all tokens for all students, not just filtered by month
+    // Get all tokens for all students
     const db = JSON.parse(localStorage.getItem('tripti_db') || '{}');
     const allTokens = db.tokens || [];
     
+    // Calculate total tokens (400 per month)
     const total = getTotalTokens();
-    const used = allTokens.length; // Count all tokens, not filtered by month
-    const remaining = total - used;
+    
+    // Count used tokens
+    const used = allTokens.length;
+    
+    // Calculate remaining tokens
+    const remaining = Math.max(0, total - used);
     
     setTotalTokens(total);
     setTotalTokensUsed(used);
     setRemainingTokens(remaining);
     
+    // Reset food counts
     const foodCounts = {
       chicken: 0,
       beef: 0,
@@ -91,7 +103,7 @@ const StudentData = () => {
       fish: 0
     } as FoodStats;
     
-    // Count food preferences from all tokens
+    // Count food preferences from all tokens in real-time
     allTokens.forEach((token: any) => {
       if (token.foodType && foodCounts[token.foodType as keyof FoodStats] !== undefined) {
         foodCounts[token.foodType as keyof FoodStats]++;
@@ -100,11 +112,10 @@ const StudentData = () => {
     
     setFoodStats(foodCounts);
     
+    // Update student data with real-time token information
     const studentDataList = students.map(student => {
       const studentTokens = getTokensByStudent(student.id);
       const tokensUsedByStudent = studentTokens.length;
-      
-      const tokensAvailable = Math.max(0, Math.floor(total / (students.length || 1)) - tokensUsedByStudent);
       
       return {
         name: student.name,
@@ -112,7 +123,7 @@ const StudentData = () => {
         email: student.email,
         roomNumber: student.roomNumber,
         tokensUsed: tokensUsedByStudent,
-        tokensAvailable: remaining,
+        tokensAvailable: Math.max(0, remaining),
       };
     });
     
